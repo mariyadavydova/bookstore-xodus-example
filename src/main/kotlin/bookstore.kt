@@ -1,7 +1,11 @@
+import jetbrains.exodus.database.TransientEntityStore
 import jetbrains.exodus.entitystore.Entity
 import kotlinx.dnq.*
 import kotlinx.dnq.enum.XdEnumEntityType
 import kotlinx.dnq.link.OnDeletePolicy
+import kotlinx.dnq.store.container.StaticStoreContainer
+import kotlinx.dnq.util.initMetaData
+import java.io.File
 
 class XdAuthor(entity: Entity) : XdEntity(entity) {
   companion object : XdNaturalEntityType<XdAuthor>()
@@ -26,8 +30,8 @@ class XdBook(entity: Entity) : XdEntity(entity) {
 
 class XdGenre(entity: Entity) : XdEnumEntity(entity) {
   companion object : XdEnumEntityType<XdGenre>() {
-    val FANTASY by enumField { presentation = "F" }
-    val ROMANCE by enumField { presentation = "R" }
+    val FANTASY by enumField { presentation = "Fantasy" }
+    val ROMANCE by enumField { presentation = "Romance" }
     val ADVENTURES by enumField { presentation = "A" }
     val OTHER by enumField { presentation = "-" }
   }
@@ -36,6 +40,44 @@ class XdGenre(entity: Entity) : XdEnumEntity(entity) {
     private set
 }
 
+fun initXodus(): TransientEntityStore {
+  XdModel.registerNodes(
+      XdAuthor,
+      XdBook,
+      XdGenre
+  )
+  val databaseHome = File(System.getProperty("user.home"), "bookstore")
+  val store = StaticStoreContainer.init(
+      dbFolder = databaseHome,
+      environmentName = "db"
+  )
+  initMetaData(XdModel.hierarchy, store)
+  return store
+}
+
 fun main() {
-  println("Hello World")
+  val store = initXodus()
+
+  val author = store.transactional {
+    XdAuthor.new {
+      name = "Charlotte Brontë"
+      country = "England"
+      yearOfBirth = 1816
+      yearofDeath = 1855
+    }
+  }
+
+  val book = store.transactional {
+    XdBook.new {
+      title = "Jane Eyre"
+      year = 1847
+      genre.add(XdGenre.ROMANCE)
+      authors.add(author)
+    }
+  }
+
+  store.transactional(readonly = true) {
+    println(author)
+    println(book)
+  }
 }
