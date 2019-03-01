@@ -1,9 +1,12 @@
 import jetbrains.exodus.database.TransientEntityStore
 import jetbrains.exodus.entitystore.Entity
+import jetbrains.exodus.entitystore.constraints.length
 import kotlinx.dnq.*
 import kotlinx.dnq.enum.XdEnumEntityType
-import kotlinx.dnq.query.XdMutableQuery
-import kotlinx.dnq.query.asSequence
+import kotlinx.dnq.query.*
+import kotlinx.dnq.simple.containsNone
+import kotlinx.dnq.simple.max
+import kotlinx.dnq.simple.regex
 import kotlinx.dnq.store.container.StaticStoreContainer
 import kotlinx.dnq.util.initMetaData
 import java.io.File
@@ -11,10 +14,13 @@ import java.io.File
 class XdAuthor(entity: Entity) : XdEntity(entity) {
   companion object : XdNaturalEntityType<XdAuthor>()
 
-  var name by xdRequiredStringProp()
-  var country by xdStringProp()
-  var yearOfBirth by xdRequiredIntProp()
-  var yearOfDeath by xdNullableIntProp()
+  var name by xdRequiredStringProp { containsNone("?!") }
+  var country by xdStringProp {
+    length(min = 3, max = 33)
+    regex(Regex("[A-Za-z.,]+"))
+  }
+  var yearOfBirth by xdRequiredIntProp { max(2019) }
+  var yearOfDeath by xdNullableIntProp { max(2019) }
   val books by xdLink0_N(XdBook::authors)
 
   override fun toString(): String {
@@ -121,5 +127,15 @@ fun main() {
 
   store.transactional(readonly = true) {
     println(XdAuthor.all().asSequence().joinToString("\n***\n"))
+  }
+
+  store.transactional(readonly = true) {
+    val fantasyBooks = XdBook.filter { it.genres contains XdGenre.FANTASY }
+    val booksOf20thCentury = XdBook.filter { (it.year ge 1900) and (it.year lt 1999) }
+    val authorWithMoreThanOneBook = XdAuthor.filter { it.books.size() > 1 }
+
+    val booksSortedByYear = XdBook.all().sortedBy(XdBook::year)
+
+    val allGenres = XdBook.all().flatMapDistinct(XdBook::genres)
   }
 }
