@@ -15,8 +15,8 @@ class XdAuthor(entity: Entity) : XdEntity(entity) {
   companion object : XdNaturalEntityType<XdAuthor>()
 
   var name by xdRequiredStringProp { containsNone("?!") }
-  var country by xdStringProp {
-    length(min = 3, max = 33)
+  var countryOfBirth by xdStringProp {
+    length(min = 3, max = 56)
     regex(Regex("[A-Za-z.,]+"))
   }
   var yearOfBirth by xdRequiredIntProp { max(2019) }
@@ -75,7 +75,7 @@ fun main() {
   val bronte = store.transactional {
     XdAuthor.new {
       name = "Charlotte Brontë"
-      country = "England"
+      countryOfBirth = "England"
       yearOfBirth = 1816
       yearOfDeath = 1855
     }
@@ -93,7 +93,7 @@ fun main() {
   val tolkien = store.transactional {
     XdAuthor.new {
       name = "J. R. R. Tolkien"
-      country = "England"
+      countryOfBirth = "England"
       yearOfBirth = 1892
       yearOfDeath = 1973
     }
@@ -115,7 +115,7 @@ fun main() {
   store.transactional {
     XdAuthor.new {
       name = "George R. R. Martin"
-      country = "USA"
+      countryOfBirth = "USA"
       yearOfBirth = 1948
       books.add(XdBook.new {
         title = "A Game of Thrones"
