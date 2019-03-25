@@ -132,7 +132,7 @@ fun main() {
   store.transactional(readonly = true) {
     val fantasyBooks = XdBook.filter { it.genres contains XdGenre.FANTASY }
     val booksOf20thCentury = XdBook.filter { (it.year ge 1900) and (it.year lt 1999) }
-    val authorWithMoreThanOneBook = XdAuthor.filter { it.books.size() > 1 }
+    val authorsFromEngland = XdAuthor.filter { it.countryOfBirth eq "England" }
 
     val booksSortedByYear = XdBook.all().sortedBy(XdBook::year)
 
